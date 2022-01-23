@@ -23,6 +23,7 @@ import indiv.park.schedule.annotation.ScheduleJob;
 import indiv.park.schedule.exception.NegativeDelayException;
 import indiv.park.schedule.exception.SameJobNameException;
 import indiv.park.starter.annotation.Module;
+import indiv.park.starter.exception.ModuleException;
 import indiv.park.starter.inheritance.ModuleBase;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,9 +33,7 @@ public class ScheduleModule implements ModuleBase {
 
 	public static final ScheduleModule INSTANCE = new ScheduleModule();
 	
-	private ScheduleModule() {
-		
-	}
+	private ScheduleModule() {}
 	
 	private final Map<String, ScheduleSet> scheduleMap = new ConcurrentHashMap<>();
 	private Object configuration;
@@ -44,11 +43,24 @@ public class ScheduleModule implements ModuleBase {
 	private final String job_execute = "{} 스케줄이 실행되었습니다.";
 	
 	@Override
-	public void initialize(Class<?> mainClass) {
+	public void initialize(Class<?> mainClass) throws ModuleException {
 		Reflections reflections = new Reflections(mainClass.getPackage().getName());
 		
-		loadScheduler();
-		loadJobList(reflections);
+		try {
+			loadScheduler();
+			
+		} catch (SchedulerException e) {
+			String msg = "스케줄러 로드에 실패함.";
+			throw new ModuleException(msg, e.getCause());
+		}
+		
+		try {
+			loadJobList(reflections);
+			
+		} catch (SchedulerException e) {
+			String msg = "스케줄 로드에 실패함.";
+			throw new ModuleException(msg, e.getCause());
+		}
 	}
 
 	@Override
@@ -56,26 +68,19 @@ public class ScheduleModule implements ModuleBase {
 		this.configuration = configuration;
 	}
 	
-	private void loadScheduler() {
-		try {
-			if (configuration == null) {
-				scheduler = StdSchedulerFactory.getDefaultScheduler();
-				
-			} else {
-				Properties schedulerProperties = new Properties();
-				schedulerProperties.putAll((Map<?, ?>) configuration);
-				
-				scheduler = new StdSchedulerFactory(schedulerProperties).getScheduler();
-			}
+	private void loadScheduler() throws SchedulerException {
+		if (configuration == null) {
+			scheduler = StdSchedulerFactory.getDefaultScheduler();
 			
+		} else {
+			Properties schedulerProperties = new Properties();
+			schedulerProperties.putAll((Map<?, ?>) configuration);
 			
-			
-		} catch (Exception e) {
-			throw new RuntimeException(e.getMessage());
+			scheduler = new StdSchedulerFactory(schedulerProperties).getScheduler();
 		}
 	}
 	
-	private void loadJobList(Reflections reflections) {
+	private void loadJobList(Reflections reflections) throws SchedulerException {
 		Set<Class<?>> scheduleSet = reflections.getTypesAnnotatedWith(ScheduleJob.class);
 		if (scheduleSet.size() == 0) {
 			logger.info("구성 가능한 스케줄이 존재하지 않습니다.");
@@ -85,18 +90,13 @@ public class ScheduleModule implements ModuleBase {
 		showFoundSchedule(scheduleSet);
 		
 		for (Class<?> clazz : scheduleSet) {
-			try {
-				ScheduleJob scheduleJob = clazz.getAnnotation(ScheduleJob.class);
-				
-				String name = scheduleJob.name();
-				String group = scheduleJob.group();
-				String cron = scheduleJob.cron().trim();
-				
-				addSchedule(clazz, name, group, cron);
-				
-			} catch (Exception e) {
-				throw new RuntimeException(e.getMessage());
-			}
+			ScheduleJob scheduleJob = clazz.getAnnotation(ScheduleJob.class);
+			
+			String name = scheduleJob.name();
+			String group = scheduleJob.group();
+			String cron = scheduleJob.cron().trim();
+			
+			addSchedule(clazz, name, group, cron);
 		}
 	}
 	
@@ -163,7 +163,7 @@ public class ScheduleModule implements ModuleBase {
 		scheduler.scheduleJob(jobDetail, trigger);
 		ScheduleSet scheduleSet = scheduleMap.putIfAbsent(jobName, new ScheduleSet(jobDetail, trigger));
 		if (scheduleSet != null) {
-			throw new SameJobNameException();
+			throw new SameJobNameException(jobName);
 		}
 	}
 	
