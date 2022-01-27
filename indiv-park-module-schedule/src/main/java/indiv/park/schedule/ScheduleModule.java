@@ -23,13 +23,12 @@ import indiv.park.schedule.annotation.ScheduleJob;
 import indiv.park.schedule.exception.NegativeDelayException;
 import indiv.park.schedule.exception.SameJobNameException;
 import indiv.park.starter.annotation.Module;
-import indiv.park.starter.exception.ModuleException;
 import indiv.park.starter.inheritance.ModuleBase;
 import lombok.extern.slf4j.Slf4j;
 
 @Module(name = "schedule")
 @Slf4j
-public class ScheduleModule implements ModuleBase {
+public final class ScheduleModule implements ModuleBase {
 
 	public static final ScheduleModule INSTANCE = new ScheduleModule();
 	
@@ -43,24 +42,11 @@ public class ScheduleModule implements ModuleBase {
 	private final String job_execute = "{} 스케줄이 실행되었습니다.";
 	
 	@Override
-	public void initialize(Class<?> mainClass) throws ModuleException {
+	public void initialize(Class<?> mainClass) throws SchedulerException  {
 		Reflections reflections = new Reflections(mainClass.getPackage().getName());
 		
-		try {
-			loadScheduler();
-			
-		} catch (SchedulerException e) {
-			String msg = "스케줄러 로드에 실패함.";
-			throw new ModuleException(msg, e.getCause());
-		}
-		
-		try {
-			loadJobList(reflections);
-			
-		} catch (SchedulerException e) {
-			String msg = "스케줄 로드에 실패함.";
-			throw new ModuleException(msg, e.getCause());
-		}
+		loadScheduler();
+		loadJobList(reflections);
 	}
 
 	@Override
@@ -142,6 +128,7 @@ public class ScheduleModule implements ModuleBase {
 				});
 			
 			scheduler.shutdown(true);
+			
 			logger.info("스케줄러를 안전하게 종료하였습니다.");
 			
 		} catch (Exception e) {
