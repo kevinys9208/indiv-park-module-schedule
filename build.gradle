@@ -1,0 +1,36 @@
+plugins {
+	id 'java'
+	id 'java-library'
+	id 'maven-publish'
+}
+
+group = 'com.github.kevinys9208'
+version 'v0.0.1-alpha'
+sourceCompatibility = '11'
+targetCompatibility = '11'
+
+repositories {
+	mavenCentral()
+	mavenLocal()
+}
+
+dependencies {
+	compileOnly 'org.projectlombok:lombok:1.18.22'
+	annotationProcessor 'org.projectlombok:lombok:1.18.22'
+
+	compileOnly 'com.github.kevinys9208:indiv-park-module-starter:v0.0.1-alpha'
+	api 'org.quartz-scheduler:quartz:2.3.2'
+}
+
+publishing {
+	publications {
+		maven(MavenPublication) {
+			from components.java
+		}
+	}
+}
+
+compileJava {
+	options.release = 8
+	options.encoding = 'UTF-8'
+}
