@@ -1,30 +1,20 @@
 package indiv.park.schedule;
 
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.quartz.CronScheduleBuilder;
-import org.quartz.Job;
-import org.quartz.JobBuilder;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.Trigger;
-import org.quartz.TriggerBuilder;
-import org.quartz.UnableToInterruptJobException;
-import org.quartz.impl.StdSchedulerFactory;
-import org.quartz.impl.matchers.GroupMatcher;
-import org.reflections.Reflections;
-
 import indiv.park.schedule.annotation.ScheduleJob;
 import indiv.park.schedule.exception.NegativeDelayException;
 import indiv.park.schedule.exception.SameJobNameException;
 import indiv.park.starter.annotation.Module;
 import indiv.park.starter.inheritance.ModuleBase;
 import lombok.extern.slf4j.Slf4j;
+import org.quartz.*;
+import org.quartz.impl.StdSchedulerFactory;
+import org.quartz.impl.matchers.GroupMatcher;
+import org.reflections.Reflections;
+
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Module(name = "schedule")
 @Slf4j
@@ -89,9 +79,8 @@ public final class ScheduleModule implements ModuleBase {
 	private void showFoundSchedule(Set<Class<?>> scheduleSet) {
 		final String found = "확인된 스케줄 : {}";
 		
-		for (Class<?> clazz : scheduleSet) {
+		for (Class<?> clazz : scheduleSet)
 			logger.info(found, clazz.getSimpleName());
-		}
 	}
 	
 	public void start() {
@@ -100,9 +89,9 @@ public final class ScheduleModule implements ModuleBase {
 	
 	public void start(int delay) {
 		try {
-			if (delay < 0) {
+			if (delay < 0)
 				throw new NegativeDelayException();
-			}
+
 			if (delay == 0) {
 				scheduler.start();
 				return;

@@ -3,7 +3,6 @@ package indiv.park.schedule.inheritance;
 import org.quartz.InterruptableJob;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.quartz.UnableToInterruptJobException;
 
 public abstract class JobBase implements InterruptableJob {
 	
@@ -23,7 +22,7 @@ public abstract class JobBase implements InterruptableJob {
 	}
 	
 	@Override
-	public void interrupt() throws UnableToInterruptJobException {
+	public void interrupt() {
 		if (thread != null) {
 			thread.interrupt();
 		}
